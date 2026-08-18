@@ -260,6 +260,7 @@ export async function logSteps(input: {
 }
 
 export async function updateSettings(input: {
+  name?: string;
   unitPreference?: Unit;
   color?: string;
   currentPin?: string;
@@ -270,6 +271,18 @@ export async function updateSettings(input: {
   const db = await getDb();
 
   const updates: Partial<typeof users.$inferInsert> = {};
+
+  if (input.name !== undefined) {
+    const name = input.name.trim();
+    if (name.length < 2 || name.length > 30) return fail("Name must be 2–30 characters.");
+    const existing = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.name, name));
+    if (existing.length > 0 && existing[0].id !== userId)
+      return fail("That name is already taken — add a last initial?");
+    updates.name = name;
+  }
 
   if (input.unitPreference) {
     if (input.unitPreference !== "kg" && input.unitPreference !== "lbs")

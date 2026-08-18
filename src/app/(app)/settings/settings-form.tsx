@@ -21,6 +21,7 @@ export function SettingsForm(props: {
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [name, setName] = useState(props.name);
   const [unit, setUnit] = useState<Unit>(props.unitPreference);
   const [color, setColor] = useState(props.color);
   const [currentPin, setCurrentPin] = useState("");
@@ -28,7 +29,7 @@ export function SettingsForm(props: {
 
   function saveProfile() {
     startTransition(async () => {
-      const result = await updateSettings({ unitPreference: unit, color });
+      const result = await updateSettings({ name, unitPreference: unit, color });
       if (result.ok) {
         toast.success("Saved.");
         router.refresh();
@@ -63,13 +64,27 @@ export function SettingsForm(props: {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex items-center gap-4">
-        <UserAvatar name={props.name} color={color} className="size-14 text-lg" />
+        <UserAvatar name={name || props.name} color={color} className="size-14 text-lg" />
         <div>
-          <p className="font-semibold">{props.name}</p>
+          <p className="font-semibold">{name || props.name}</p>
           <p className="text-sm text-muted-foreground">
             Prefers {unit === "kg" ? "metric (kg, cm)" : "imperial (lbs, in)"}
           </p>
         </div>
+      </section>
+
+      <section className="grid gap-2">
+        <Label htmlFor="name">Name</Label>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value.slice(0, 30))}
+          maxLength={30}
+          autoComplete="name"
+        />
+        <p className="text-xs text-muted-foreground">
+          This is how you show up on the leaderboard and feed.
+        </p>
       </section>
 
       <section className="grid gap-2">
