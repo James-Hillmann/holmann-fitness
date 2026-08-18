@@ -14,6 +14,10 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   pinHash: text("pin_hash").notNull(),
+  // Digit count only (4-6), never the PIN itself: lets the login pad
+  // auto-submit iPhone-style once enough digits are typed. Null for
+  // accounts whose PIN predates this column; they keep the Log in button.
+  pinLength: integer("pin_length"),
   unitPreference: text("unit_preference", { enum: ["kg", "lbs"] })
     .notNull()
     .default("kg"),

@@ -8,9 +8,15 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"];
 export const PIN_MIN = 4;
 export const PIN_MAX = 6;
 
-export function PinDots({ filled }: { filled: number }) {
-  // PINs are 4-6 digits; show extra dots as they're typed.
-  const total = Math.min(Math.max(PIN_MIN, filled), PIN_MAX);
+export function PinDots({
+  filled,
+  total: fixedTotal,
+}: {
+  filled: number;
+  /** Known PIN length shows that many dots; null grows 4→6 as typed. */
+  total?: number | null;
+}) {
+  const total = fixedTotal ?? Math.min(Math.max(PIN_MIN, filled), PIN_MAX);
   return (
     <div className="flex items-center justify-center gap-3" aria-label={`${filled} PIN digits entered`}>
       {Array.from({ length: total }, (_, i) => (

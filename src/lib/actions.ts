@@ -54,7 +54,13 @@ export async function join(input: {
   const pinHash = await bcrypt.hash(input.pin, 10);
   const [user] = await db
     .insert(users)
-    .values({ name, pinHash, unitPreference: input.unit, color })
+    .values({
+      name,
+      pinHash,
+      pinLength: input.pin.length,
+      unitPreference: input.unit,
+      color,
+    })
     .returning({ id: users.id });
 
   if (input.startingWeight && input.startingWeight > 0) {
@@ -71,12 +77,17 @@ export async function login(input: { userId: number; pin: string }): Promise<Act
   if (!validPin(input.pin)) return fail("PIN must be 4–6 digits.");
   const db = await getDb();
   const [user] = await db
-    .select({ id: users.id, pinHash: users.pinHash })
+    .select({ id: users.id, pinHash: users.pinHash, pinLength: users.pinLength })
     .from(users)
     .where(eq(users.id, input.userId));
   if (!user) return fail("Account not found.");
   const match = await bcrypt.compare(input.pin, user.pinHash);
   if (!match) return fail("Wrong PIN — try again.");
+  // Backfill for accounts whose PIN predates the pin_length column, so
+  // auto-submit kicks in from their next login.
+  if (user.pinLength !== input.pin.length) {
+    await db.update(users).set({ pinLength: input.pin.length }).where(eq(users.id, user.id));
+  }
   await createSession(user.id);
   return ok;
 }
@@ -344,6 +355,7 @@ export async function updateSettings(input: {
     if (!user || !input.currentPin || !(await bcrypt.compare(input.currentPin, user.pinHash)))
       return fail("Current PIN is wrong.");
     updates.pinHash = await bcrypt.hash(input.newPin, 10);
+    updates.pinLength = input.newPin.length;
   }
 
   if (Object.keys(updates).length === 0) return fail("Nothing to update.");

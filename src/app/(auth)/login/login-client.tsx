@@ -15,6 +15,8 @@ interface Member {
   name: string;
   color: string;
   avatarVersion: number | null;
+  /** Digit count of their PIN; null for pre-column accounts. */
+  pinLength: number | null;
 }
 
 export function LoginClient({ members }: { members: Member[] }) {
@@ -39,8 +41,10 @@ export function LoginClient({ members }: { members: Member[] }) {
 
   function handlePinChange(next: string) {
     setPin(next);
-    // 6 digits is the max, so submit immediately; shorter PINs use the button.
-    if (next.length === PIN_MAX) submitPin(next);
+    // Auto-submit iPhone-style once the full PIN is typed. For accounts
+    // whose PIN length is unknown, only 6 digits (the max) auto-submits;
+    // they use the button below for shorter PINs.
+    if (next.length === (selected?.pinLength ?? PIN_MAX)) submitPin(next);
   }
 
   return (
@@ -92,16 +96,25 @@ export function LoginClient({ members }: { members: Member[] }) {
             />
             <span className="font-medium">{selected.name}</span>
           </div>
-          <PinDots filled={pin.length} />
+          <PinDots filled={pin.length} total={selected.pinLength} />
           <PinPad value={pin} onChange={handlePinChange} disabled={pending} />
-          <Button
-            size="lg"
-            className="mx-auto w-full max-w-xs font-semibold"
-            disabled={pending || pin.length < PIN_MIN}
-            onClick={() => submitPin(pin)}
-          >
-            {pending ? "Checking…" : "Log in"}
-          </Button>
+          {selected.pinLength == null ? (
+            <Button
+              size="lg"
+              className="mx-auto w-full max-w-xs font-semibold"
+              disabled={pending || pin.length < PIN_MIN}
+              onClick={() => submitPin(pin)}
+            >
+              {pending ? "Checking…" : "Log in"}
+            </Button>
+          ) : (
+            <p
+              className="text-center text-sm text-muted-foreground"
+              aria-live="polite"
+            >
+              {pending ? "Checking…" : " "}
+            </p>
+          )}
           <Button
             variant="ghost"
             className="mx-auto"

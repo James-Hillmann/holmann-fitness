@@ -42,6 +42,7 @@ export async function getUsersForLogin() {
       name: users.name,
       color: users.color,
       avatarVersion: users.avatarVersion,
+      pinLength: users.pinLength,
     })
     .from(users)
     .orderBy(users.name);
