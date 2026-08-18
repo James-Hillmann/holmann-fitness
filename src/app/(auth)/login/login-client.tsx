@@ -114,23 +114,12 @@ export function LoginClient({ members }: { members: Member[] }) {
           </div>
           <PinDots filled={pin.length} total={selected.pinLength} />
           <PinPad value={pin} onChange={handlePinChange} disabled={pending} />
-          {selected.pinLength == null ? (
-            <Button
-              size="lg"
-              className="mx-auto w-full max-w-xs font-semibold"
-              disabled={pending || pin.length < PIN_MIN}
-              onClick={() => submitPin(pin)}
-            >
-              {pending ? "Checking…" : "Log in"}
-            </Button>
-          ) : (
-            <p
-              className="text-center text-sm text-muted-foreground"
-              aria-live="polite"
-            >
-              {pending ? "Checking…" : " "}
-            </p>
-          )}
+          <p
+            className="text-center text-sm text-muted-foreground"
+            aria-live="polite"
+          >
+            {pending ? "Checking…" : " "}
+          </p>
           <Button
             variant="ghost"
             className="mx-auto"
