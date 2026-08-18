@@ -41,10 +41,26 @@ export function LoginClient({ members }: { members: Member[] }) {
 
   function handlePinChange(next: string) {
     setPin(next);
-    // Auto-submit iPhone-style once the full PIN is typed. For accounts
-    // whose PIN length is unknown, only 6 digits (the max) auto-submits;
-    // they use the button below for shorter PINs.
-    if (next.length === (selected?.pinLength ?? PIN_MAX)) submitPin(next);
+    // Auto-submit iPhone-style once the full PIN is typed.
+    if (next.length === (selected?.pinLength ?? PIN_MAX)) {
+      submitPin(next);
+    } else if (selected?.pinLength == null && next.length >= PIN_MIN) {
+      // PIN length unknown (account predates pin_length): quietly try each
+      // candidate — a hit logs in right away (and the server backfills the
+      // length), a miss just waits for more digits. Wrong-PIN feedback only
+      // appears at 6 digits or via the button, so misses here stay silent.
+      trySilently(next);
+    }
+  }
+
+  function trySilently(candidate: string) {
+    if (!selected) return;
+    void login({ userId: selected.id, pin: candidate }).then((result) => {
+      if (result.ok) {
+        router.push("/");
+        router.refresh();
+      }
+    });
   }
 
   return (
