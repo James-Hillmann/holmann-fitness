@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 import {
+  avatars,
   measurements,
   steps,
   users,
@@ -256,6 +257,44 @@ export async function logSteps(input: {
     });
   revalidatePath("/");
   revalidatePath("/log");
+  return ok;
+}
+
+// The client resizes to ~256px before uploading, so anything bigger than
+// this is either a bug or someone bypassing the form.
+const MAX_AVATAR_BYTES = 300 * 1024;
+const AVATAR_MIME_TYPES = ["image/webp", "image/jpeg", "image/png"];
+
+export async function uploadAvatar(formData: FormData): Promise<ActionResult> {
+  const userId = await getSessionUserId();
+  if (!userId) return fail("You're not logged in.");
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return fail("Pick a photo first.");
+  if (!AVATAR_MIME_TYPES.includes(file.type)) return fail("That file isn't an image we support.");
+  if (file.size > MAX_AVATAR_BYTES) return fail("That photo is too large — try a smaller one.");
+
+  const data = Buffer.from(await file.arrayBuffer()).toString("base64");
+  const db = await getDb();
+  await db
+    .insert(avatars)
+    .values({ userId, data, mimeType: file.type, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: avatars.userId,
+      set: { data, mimeType: file.type, updatedAt: new Date() },
+    });
+  await db.update(users).set({ avatarVersion: Date.now() }).where(eq(users.id, userId));
+  revalidatePath("/", "layout");
+  return ok;
+}
+
+export async function removeAvatar(): Promise<ActionResult> {
+  const userId = await getSessionUserId();
+  if (!userId) return fail("You're not logged in.");
+  const db = await getDb();
+  await db.delete(avatars).where(eq(avatars.userId, userId));
+  await db.update(users).set({ avatarVersion: null }).where(eq(users.id, userId));
+  revalidatePath("/", "layout");
   return ok;
 }
 

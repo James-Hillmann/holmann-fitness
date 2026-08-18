@@ -23,6 +23,8 @@ export interface FeedItemProps {
   id: number;
   userName: string;
   userColor: string;
+  /** From avatarUrl(); null shows the initials fallback. */
+  userAvatarSrc: string | null;
   typeLabel: string;
   typeEmoji: string;
   duration: string;
@@ -91,7 +93,7 @@ export function WorkoutFeedItem(props: FeedItemProps) {
   return (
     <li className="rounded-xl border bg-card p-3.5">
       <div className="flex items-start gap-3">
-        <UserAvatar name={props.userName} color={props.userColor} />
+        <UserAvatar name={props.userName} color={props.userColor} src={props.userAvatarSrc} />
         <div className="min-w-0 flex-1">
           <p className="text-sm">
             <span className="font-semibold">{props.userName}</span>{" "}

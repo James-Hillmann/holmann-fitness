@@ -1,23 +1,49 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { LogOut } from "lucide-react";
+import { Camera, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemePicker } from "@/components/theme-toggle";
-import { UserAvatar } from "@/components/user-avatar";
-import { logout, updateSettings } from "@/lib/actions";
+import { avatarUrl, UserAvatar } from "@/components/user-avatar";
+import { logout, removeAvatar, updateSettings, uploadAvatar } from "@/lib/actions";
 import type { Unit } from "@/lib/units";
 import { AVATAR_COLORS, avatarClasses } from "@/lib/workout-types";
 import { cn } from "@/lib/utils";
 
+const AVATAR_SIZE = 256;
+
+/** Center-crop to a square and downscale, so uploads stay tiny. */
+async function resizeAvatar(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = AVATAR_SIZE;
+  canvas.height = AVATAR_SIZE;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas unavailable");
+  const scale = Math.max(AVATAR_SIZE / bitmap.width, AVATAR_SIZE / bitmap.height);
+  const w = bitmap.width * scale;
+  const h = bitmap.height * scale;
+  ctx.drawImage(bitmap, (AVATAR_SIZE - w) / 2, (AVATAR_SIZE - h) / 2, w, h);
+  return new Promise((resolve, reject) => {
+    // Browsers without webp encoding silently fall back to png.
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Could not encode image"))),
+      "image/webp",
+      0.85,
+    );
+  });
+}
+
 export function SettingsForm(props: {
+  userId: number;
   name: string;
   unitPreference: Unit;
   color: string;
+  avatarVersion: number | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -26,6 +52,39 @@ export function SettingsForm(props: {
   const [color, setColor] = useState(props.color);
   const [currentPin, setCurrentPin] = useState("");
   const [newPin, setNewPin] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handlePhotoPicked(file: File | undefined) {
+    if (!file) return;
+    startTransition(async () => {
+      try {
+        const blob = await resizeAvatar(file);
+        const formData = new FormData();
+        formData.append("file", new File([blob], "avatar", { type: blob.type }));
+        const result = await uploadAvatar(formData);
+        if (result.ok) {
+          toast.success("Photo updated.");
+          router.refresh();
+        } else {
+          toast.error(result.error);
+        }
+      } catch {
+        toast.error("Couldn't read that image — try a different one.");
+      }
+    });
+  }
+
+  function handleRemovePhoto() {
+    startTransition(async () => {
+      const result = await removeAvatar();
+      if (result.ok) {
+        toast.success("Photo removed.");
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }
 
   function saveProfile() {
     startTransition(async () => {
@@ -64,13 +123,49 @@ export function SettingsForm(props: {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex items-center gap-4">
-        <UserAvatar name={name || props.name} color={color} className="size-14 text-lg" />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={pending}
+          aria-label="Change profile photo"
+          className="group relative rounded-full"
+        >
+          <UserAvatar
+            name={name || props.name}
+            color={color}
+            src={avatarUrl(props.userId, props.avatarVersion)}
+            className="size-14 text-lg"
+          />
+          <span className="absolute -right-0.5 -bottom-0.5 flex size-6 items-center justify-center rounded-full border bg-card text-muted-foreground transition-colors group-hover:text-foreground">
+            <Camera className="size-3.5" />
+          </span>
+        </button>
         <div>
           <p className="font-semibold">{name || props.name}</p>
           <p className="text-sm text-muted-foreground">
             Prefers {unit === "kg" ? "metric (kg, cm)" : "imperial (lbs, in)"}
           </p>
+          {props.avatarVersion != null && (
+            <button
+              type="button"
+              onClick={handleRemovePhoto}
+              disabled={pending}
+              className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+            >
+              Remove photo
+            </button>
+          )}
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            handlePhotoPicked(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
       </section>
 
       <section className="grid gap-2">

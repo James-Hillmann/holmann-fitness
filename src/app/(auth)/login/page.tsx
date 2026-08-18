@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
-import { getSessionUserId } from "@/lib/session";
-import { getUsersForLogin } from "@/lib/queries";
+import { getCurrentUser, getUsersForLogin } from "@/lib/queries";
 import { LoginClient } from "./login-client";
 
 export default async function LoginPage() {
-  const userId = await getSessionUserId();
-  if (userId) redirect("/");
+  // Checks the user still exists (not just that the token parses) so a stale
+  // cookie for a deleted account can't redirect-loop against requireUser.
+  const user = await getCurrentUser();
+  if (user) redirect("/");
   const members = await getUsersForLogin();
   return <LoginClient members={members} />;
 }

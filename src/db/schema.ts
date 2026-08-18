@@ -1,4 +1,5 @@
 import {
+  bigint,
   date,
   integer,
   pgTable,
@@ -17,7 +18,23 @@ export const users = pgTable("users", {
     .notNull()
     .default("kg"),
   color: text("color").notNull().default("emerald"),
+  // Null = no uploaded photo (initials avatar). Set to the upload's epoch-ms
+  // timestamp so versioned image URLs can be cached as immutable.
+  avatarVersion: bigint("avatar_version", { mode: "number" }),
   createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// Avatar photos, resized client-side before upload and stored base64-encoded
+// so both Postgres drivers (neon-http and PGlite) handle them identically.
+export const avatars = pgTable("avatars", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  data: text("data").notNull(),
+  mimeType: text("mime_type").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });

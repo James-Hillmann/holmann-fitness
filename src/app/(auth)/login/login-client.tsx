@@ -7,13 +7,14 @@ import { toast } from "sonner";
 import { ArrowLeft, Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PIN_MAX, PIN_MIN, PinDots, PinPad } from "@/components/pin-pad";
-import { UserAvatar } from "@/components/user-avatar";
+import { avatarUrl, UserAvatar } from "@/components/user-avatar";
 import { login } from "@/lib/actions";
 
 interface Member {
   id: number;
   name: string;
   color: string;
+  avatarVersion: number | null;
 }
 
 export function LoginClient({ members }: { members: Member[] }) {
@@ -69,7 +70,7 @@ export function LoginClient({ members }: { members: Member[] }) {
                   onClick={() => setSelected(m)}
                   className="flex items-center gap-3 rounded-xl border bg-card p-3 text-left transition-colors hover:border-primary/50 hover:bg-accent active:scale-[0.98]"
                 >
-                  <UserAvatar name={m.name} color={m.color} />
+                  <UserAvatar name={m.name} color={m.color} src={avatarUrl(m.id, m.avatarVersion)} />
                   <span className="truncate text-sm font-medium">{m.name}</span>
                 </button>
               ))}
@@ -84,7 +85,11 @@ export function LoginClient({ members }: { members: Member[] }) {
       ) : (
         <div className="flex w-full max-w-sm flex-col gap-6">
           <div className="flex items-center justify-center gap-3">
-            <UserAvatar name={selected.name} color={selected.color} />
+            <UserAvatar
+              name={selected.name}
+              color={selected.color}
+              src={avatarUrl(selected.id, selected.avatarVersion)}
+            />
             <span className="font-medium">{selected.name}</span>
           </div>
           <PinDots filled={pin.length} />

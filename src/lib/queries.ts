@@ -37,7 +37,12 @@ export async function requireUser(): Promise<User> {
 export async function getUsersForLogin() {
   const db = await getDb();
   return db
-    .select({ id: users.id, name: users.name, color: users.color })
+    .select({
+      id: users.id,
+      name: users.name,
+      color: users.color,
+      avatarVersion: users.avatarVersion,
+    })
     .from(users)
     .orderBy(users.name);
 }
@@ -60,6 +65,7 @@ export interface FeedItem {
   userId: number;
   userName: string;
   userColor: string;
+  userAvatarVersion: number | null;
   type: string;
   durationMinutes: number;
   notes: string | null;
@@ -76,6 +82,7 @@ export async function getFeed(limit = 50): Promise<FeedItem[]> {
       userId: workouts.userId,
       userName: users.name,
       userColor: users.color,
+      userAvatarVersion: users.avatarVersion,
       type: workouts.type,
       durationMinutes: workouts.durationMinutes,
       notes: workouts.notes,
@@ -133,6 +140,7 @@ export interface StepsEntry {
   userId: number;
   name: string;
   color: string;
+  avatarVersion: number | null;
   stepsThisWeek: number;
 }
 
@@ -145,6 +153,7 @@ export async function getStepsLeaderboard(): Promise<StepsEntry[]> {
       userId: steps.userId,
       name: users.name,
       color: users.color,
+      avatarVersion: users.avatarVersion,
       day: steps.day,
       count: steps.count,
     })
@@ -158,6 +167,7 @@ export async function getStepsLeaderboard(): Promise<StepsEntry[]> {
       userId: r.userId,
       name: r.name,
       color: r.color,
+      avatarVersion: r.avatarVersion,
       stepsThisWeek: 0,
     };
     entry.stepsThisWeek += r.count;
@@ -180,6 +190,7 @@ export interface LeaderboardEntry {
   userId: number;
   name: string;
   color: string;
+  avatarVersion: number | null;
   workoutsThisWeek: number;
   workoutsTotal: number;
   minutesThisWeek: number;
@@ -193,6 +204,7 @@ export interface WeightLossEntry {
   userId: number;
   name: string;
   color: string;
+  avatarVersion: number | null;
   lostKg: number;
   weighInCount: number;
 }
@@ -200,7 +212,14 @@ export interface WeightLossEntry {
 export async function getWorkoutLeaderboard(): Promise<LeaderboardEntry[]> {
   const db = await getDb();
   const [allUsers, allWorkouts, allSteps] = await Promise.all([
-    db.select({ id: users.id, name: users.name, color: users.color }).from(users),
+    db
+      .select({
+        id: users.id,
+        name: users.name,
+        color: users.color,
+        avatarVersion: users.avatarVersion,
+      })
+      .from(users),
     db
       .select({
         userId: workouts.userId,
@@ -225,6 +244,7 @@ export async function getWorkoutLeaderboard(): Promise<LeaderboardEntry[]> {
         userId: u.id,
         name: u.name,
         color: u.color,
+        avatarVersion: u.avatarVersion,
         workoutsThisWeek: thisWeek.length,
         workoutsTotal: mine.length,
         minutesThisWeek: thisWeek.reduce((s, w) => s + w.durationMinutes, 0),
@@ -247,7 +267,14 @@ export async function getWorkoutLeaderboard(): Promise<LeaderboardEntry[]> {
 export async function getWeightLossLeaderboard(): Promise<WeightLossEntry[]> {
   const db = await getDb();
   const [allUsers, allWeighIns] = await Promise.all([
-    db.select({ id: users.id, name: users.name, color: users.color }).from(users),
+    db
+      .select({
+        id: users.id,
+        name: users.name,
+        color: users.color,
+        avatarVersion: users.avatarVersion,
+      })
+      .from(users),
     db
       .select({
         userId: weighIns.userId,
@@ -268,6 +295,7 @@ export async function getWeightLossLeaderboard(): Promise<WeightLossEntry[]> {
         userId: u.id,
         name: u.name,
         color: u.color,
+        avatarVersion: u.avatarVersion,
         lostKg: first - latest,
         weighInCount: mine.length,
       };
@@ -300,6 +328,7 @@ export interface CmLossEntry {
   userId: number;
   name: string;
   color: string;
+  avatarVersion: number | null;
   /** Sum over sites of (first reading − latest reading). */
   lostCm: number;
   /** True once any site has at least two readings. */
@@ -313,7 +342,14 @@ export interface CmLossEntry {
 export async function getCmLossLeaderboard(): Promise<CmLossEntry[]> {
   const db = await getDb();
   const [allUsers, allMeasurements] = await Promise.all([
-    db.select({ id: users.id, name: users.name, color: users.color }).from(users),
+    db
+      .select({
+        id: users.id,
+        name: users.name,
+        color: users.color,
+        avatarVersion: users.avatarVersion,
+      })
+      .from(users),
     db
       .select({
         userId: measurements.userId,
@@ -342,7 +378,14 @@ export async function getCmLossLeaderboard(): Promise<CmLossEntry[]> {
           lostCm += values[0] - values[values.length - 1];
         }
       }
-      return { userId: u.id, name: u.name, color: u.color, lostCm, hasProgress };
+      return {
+        userId: u.id,
+        name: u.name,
+        color: u.color,
+        avatarVersion: u.avatarVersion,
+        lostCm,
+        hasProgress,
+      };
     })
     .filter((e): e is CmLossEntry => e !== null)
     .sort((a, b) => b.lostCm - a.lostCm);

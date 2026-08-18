@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Flame, Plus } from "lucide-react";
 import { Board } from "@/components/board";
 import { Button } from "@/components/ui/button";
+import { avatarUrl } from "@/components/user-avatar";
 import { WorkoutFeedItem } from "@/components/workout-feed-item";
 import { formatDuration, formatRelative } from "@/lib/format";
 import { getFeed, getWorkoutLeaderboard, requireUser } from "@/lib/queries";
@@ -56,6 +57,7 @@ export default async function DashboardPage() {
             userId: e.userId,
             name: e.name,
             color: e.color,
+            avatarSrc: avatarUrl(e.userId, e.avatarVersion),
             value: (
               <>
                 {e.streakDays > 1 && (
@@ -97,6 +99,7 @@ export default async function DashboardPage() {
                   id={item.id}
                   userName={item.userName}
                   userColor={item.userColor}
+                  userAvatarSrc={avatarUrl(item.userId, item.userAvatarVersion)}
                   typeLabel={t.label}
                   typeEmoji={t.emoji}
                   duration={formatDuration(item.durationMinutes)}

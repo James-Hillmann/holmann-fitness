@@ -5,6 +5,8 @@ export interface BoardRow {
   userId: number;
   name: string;
   color: string;
+  /** From avatarUrl(); null shows the initials fallback. */
+  avatarSrc: string | null;
   /** Right-aligned primary value. */
   value: ReactNode;
   /** Optional small line under the value. */
@@ -37,7 +39,12 @@ export function Board({
           <span className="w-5 text-center text-sm font-bold text-muted-foreground">
             {i + 1}
           </span>
-          <UserAvatar name={row.name} color={row.color} className="size-8 text-xs" />
+          <UserAvatar
+            name={row.name}
+            color={row.color}
+            src={row.avatarSrc}
+            className="size-8 text-xs"
+          />
           <span className="min-w-0 flex-1 truncate text-sm font-medium">
             {row.name}
             {row.userId === currentUserId && (

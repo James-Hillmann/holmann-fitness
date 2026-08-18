@@ -1,5 +1,6 @@
 import { Dumbbell, Flame, Footprints, Ruler, TrendingDown, Trophy } from "lucide-react";
 import { Board } from "@/components/board";
+import { avatarUrl } from "@/components/user-avatar";
 import { formatDuration } from "@/lib/format";
 import {
   getCmLossLeaderboard,
@@ -46,6 +47,7 @@ export default async function LeaderboardPage() {
       userId: e.userId,
       name: e.name,
       color: e.color,
+      avatarSrc: avatarUrl(e.userId, e.avatarVersion),
       value:
         e.streakDays > 0 ? (
           <span className="text-orange-600 dark:text-orange-400">
@@ -92,6 +94,7 @@ export default async function LeaderboardPage() {
             userId: e.userId,
             name: e.name,
             color: e.color,
+            avatarSrc: avatarUrl(e.userId, e.avatarVersion),
             value: `${e.workoutsThisWeek} ${e.workoutsThisWeek === 1 ? "workout" : "workouts"}`,
             sub:
               e.minutesThisWeek > 0
@@ -112,6 +115,7 @@ export default async function LeaderboardPage() {
             userId: e.userId,
             name: e.name,
             color: e.color,
+            avatarSrc: avatarUrl(e.userId, e.avatarVersion),
             value:
               e.weighInCount < 2 ? (
                 <span className="font-normal text-muted-foreground">just started</span>
@@ -143,6 +147,7 @@ export default async function LeaderboardPage() {
             userId: e.userId,
             name: e.name,
             color: e.color,
+            avatarSrc: avatarUrl(e.userId, e.avatarVersion),
             value: !e.hasProgress ? (
               <span className="font-normal text-muted-foreground">just started</span>
             ) : e.lostCm > 0 ? (
@@ -171,6 +176,7 @@ export default async function LeaderboardPage() {
             userId: e.userId,
             name: e.name,
             color: e.color,
+            avatarSrc: avatarUrl(e.userId, e.avatarVersion),
             value: (
               <span className="tabular-nums">
                 {e.stepsThisWeek.toLocaleString("en-ZA")}
