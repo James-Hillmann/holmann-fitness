@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HolMann Fitness
 
-## Getting Started
+A family workout tracker. Everyone logs workouts and sees each other's activity;
+body numbers stay private — the family only ever sees how much you've lost.
 
-First, run the development server:
+**Live site:** https://holmann-fitness.vercel.app
+
+## How it works
+
+- **Join** with just your name and a 4–6 digit PIN. No emails, no passwords, no
+  invite codes — it's one big family.
+- **Log in** by tapping your name and entering your PIN on a keypad.
+- **Workouts** appear in a shared feed with emoji reactions (💪🔥👏🎉❤️) and
+  comments.
+- **Board tab**: daily streaks (any day with a workout *or* logged steps keeps
+  the 🔥 alive, with best-ever shown), workouts this week, weight lost,
+  centimeters/inches lost, and steps this week.
+- **Steps** (optional): log your daily step count on the Log page; totals show
+  on the weekly steps board.
+- **Body page** (private per person):
+  - *Weight* — weigh-ins, chart, and change since your first entry.
+  - *Measurements* — tape-measure readings in cm/inches for waist, hips,
+    chest, thigh, and arm, each with its own chart.
+  - Others only ever see your total lost (weight and centimeters), converted
+    to *their* preferred unit system (kg/cm ↔ lbs/in, exact factors) — half
+    the family is in South Africa, half in the US.
+- **Theme** follows your device's light/dark setting by default; override with
+  the toggle in the nav or Light/Auto/Dark in settings.
+
+## Development
 
 ```bash
+npm install
+npm run db:push   # creates/updates the schema in the local embedded database
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Local dev always uses a zero-setup embedded Postgres (PGlite) in `.pglite/` —
+`.env.development.local` blanks `DATABASE_URL` on purpose because the value
+`vercel env pull` writes to `.env.local` points at the **production** Neon
+database. Don't remove that override.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run test      # vitest: unit conversions (kg/lbs, cm/in) + streak logic
+npm run lint
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deployment
 
-## Learn More
+Hosted on Vercel (`holmann-fitness`) with Neon Postgres from the Vercel
+Marketplace. Production env vars: `DATABASE_URL` (auto-provisioned) and
+`SESSION_SECRET`.
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+vercel --prod                                            # deploy
+vercel env pull <file> --environment=production --yes    # get prod env
+npx dotenv -e <file> -- npx drizzle-kit push             # schema changes
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16 (App Router, server actions) · Tailwind 4 + shadcn/ui (Base UI) ·
+next-themes · Drizzle ORM · Neon Postgres / PGlite · jose sessions (httpOnly
+cookie, 90 days) · bcrypt-hashed PINs · Recharts.
