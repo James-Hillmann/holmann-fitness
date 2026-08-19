@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ export interface FeedItemComment {
 
 export interface FeedItemProps {
   id: number;
+  userId: number;
   userName: string;
   userColor: string;
   /** From avatarUrl(); null shows the initials fallback. */
@@ -93,10 +95,14 @@ export function WorkoutFeedItem(props: FeedItemProps) {
   return (
     <li className="rounded-xl border bg-card p-3.5">
       <div className="flex items-start gap-3">
-        <UserAvatar name={props.userName} color={props.userColor} src={props.userAvatarSrc} />
+        <Link href={`/u/${props.userId}`} className="shrink-0" aria-label={`${props.userName}'s profile`}>
+          <UserAvatar name={props.userName} color={props.userColor} src={props.userAvatarSrc} />
+        </Link>
         <div className="min-w-0 flex-1">
           <p className="text-sm">
-            <span className="font-semibold">{props.userName}</span>{" "}
+            <Link href={`/u/${props.userId}`} className="font-semibold hover:underline">
+              {props.userName}
+            </Link>{" "}
             <span className="text-muted-foreground">logged</span>{" "}
             <span className="font-medium">
               {props.typeEmoji} {props.typeLabel}

@@ -97,6 +97,7 @@ export default async function DashboardPage() {
                 <WorkoutFeedItem
                   key={item.id}
                   id={item.id}
+                  userId={item.userId}
                   userName={item.userName}
                   userColor={item.userColor}
                   userAvatarSrc={avatarUrl(item.userId, item.userAvatarVersion)}

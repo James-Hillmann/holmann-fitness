@@ -48,6 +48,22 @@ export async function getUsersForLogin() {
     .orderBy(users.name);
 }
 
+/** Public shape for profile pages: no PIN data, no weigh-ins or measurements. */
+export async function getPublicProfile(userId: number) {
+  const db = await getDb();
+  const [row] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      color: users.color,
+      avatarVersion: users.avatarVersion,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .where(eq(users.id, userId));
+  return row ?? null;
+}
+
 export interface FeedReaction {
   emoji: string;
   userId: number;
@@ -75,7 +91,7 @@ export interface FeedItem {
   comments: FeedComment[];
 }
 
-export async function getFeed(limit = 50): Promise<FeedItem[]> {
+export async function getFeed(limit = 50, onlyUserId?: number): Promise<FeedItem[]> {
   const db = await getDb();
   const rows = await db
     .select({
@@ -91,6 +107,7 @@ export async function getFeed(limit = 50): Promise<FeedItem[]> {
     })
     .from(workouts)
     .innerJoin(users, eq(workouts.userId, users.id))
+    .where(onlyUserId === undefined ? undefined : eq(workouts.userId, onlyUserId))
     .orderBy(desc(workouts.performedAt), desc(workouts.id))
     .limit(limit);
 
